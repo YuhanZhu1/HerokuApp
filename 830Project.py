@@ -1,10 +1,8 @@
 import streamlit as st
-
 import pandas as pd
 from pandas import Series
 from fredapi import Fred
 import yfinance as yf
-
 import altair as alt
 from PIL import Image 
 
@@ -68,9 +66,12 @@ st.write("Histgram")
 hist = alt.Chart(cpi_month).mark_bar().encode(
     x='Index',
     y='count()',
-    color=alt.value("#00FF00")
+    color=alt.value("#FFAA00")
     )
 st.write(hist)
+cpiYear = cpi_month.groupby(cpi_month['Date'].dt.year).sum()
+cpiDescribe = cpiYear.describe().T
+st.write(cpiDescribe)
 st.write("""
 The mean of change by the end of each month is 0.303173
 
@@ -102,12 +103,18 @@ N = sp_df['Close'].size
 change = ((sp_df['Close'][1:].values / sp_df['Close'][:N-1].values) - 1)*100
 
 changeData = Series(change, index=sp_df.index[1:])
-sp_day = pd.DataFrame({'Date':changeData.index,'Percent':changeData.values})
+sp_day = pd.DataFrame({'Date':changeData.index,'SP_Percent':changeData.values})
 
-st.line_chart(sp_day['Percent'])
+sp_chart = alt.Chart(sp_day).mark_line().encode(
+    y='SP_Percent',
+    x='Date',
+    color=alt.value("#FFAA00"),
+    tooltip=['SP_Percent','Date'],
+    ).interactive()
+st.write(sp_chart)
 
 spM = sp_day.groupby(sp_day['Date'].dt.year).sum()
-spDescribe = spM.describe()
+spDescribe = spM.describe().T
 st.write(spDescribe)
 
 ### nasdaq
@@ -117,9 +124,21 @@ N = nq_df['Close'].size
 change = ((nq_df['Close'][1:].values / nq_df['Close'][:N-1].values) - 1)*100
 
 changeData = Series(change, index=nq_df.index[1:])
-nq_day = pd.DataFrame({'Date':changeData.index,'Percent':changeData.values})
+nq_day = pd.DataFrame({'Date':changeData.index,'NQ_Percent':changeData.values})
 
-st.line_chart(nq_day['Percent'])
+nq_chart = alt.Chart(nq_day).mark_line().encode(
+    y='NQ_Percent',
+    x='Date',
+    color=alt.value("#FFAA00"),
+    tooltip=['NQ_Percent','Date'],
+    ).interactive()
+st.write(nq_chart)
+
 nqM = nq_day.groupby(nq_day['Date'].dt.year).sum()
-nqDescribe = nqM.describe()
+nqDescribe = nqM.describe().T
 st.write(nqDescribe)
+
+# Combine together
+combine = pd.concat([spM, nqM,cpiYear], axis=1, join='inner')
+st.write(combine)
+st.line_chart(data=combine)

@@ -23,9 +23,11 @@ This project will focus on the following topics:
 
 
 st.markdown("""
-### First, let's loog at the CPI data 💸💸💸
-A consumer price index (CPI) is a price index, the price of a weighted average market basket of consumer goods and services purchased by households. Changes in measured CPI track changes in prices over time.
+### First, let's look at the CPI data 💸💸💸
+A consumer price index (CPI) is a price index, the price of a weighted average market basket of consumer goods and services purchased by households. CPI track changes in prices over time.
 [link](https://en.wikipedia.org/wiki/Consumer_price_index)
+
+***
 """)
 
 #################
@@ -39,13 +41,15 @@ cpi_df = pd.DataFrame({'Date':cpi.index,'Index':cpi.values})
 #########################
 # Plot the Raw CPI Data #
 #########################
-st.write("CPI Raw Data")
+st.write("**CPI Raw Data From FRED API**")
 cpi_chart = alt.Chart(cpi_df).mark_line().encode(
     x='Date',
     y='Index',
     color=alt.value("#FFAA00"),
     tooltip=['Index','Date']
-).interactive()
+).interactive().properties(
+    width=600,
+    height=300)
 
 st.write(cpi_chart)
 
@@ -71,48 +75,61 @@ cpi_monthc = alt.Chart(cpi_month).mark_line().encode(
     y='Index',
     color=alt.value("#FFAA00"),
     tooltip=['Index','Date'],
-    ).interactive()
+    ).interactive().properties(
+    width=600,
+    height=300
+)
 st.write(cpi_monthc)
 
 ###############################
 # Plot a Histgram of the data #
 ###############################
-st.write("Histgram")
+st.write("Histgram Showing Monthly CPI Changes")
 hist = alt.Chart(cpi_month).mark_bar().encode(
     x='Index',
     y='count()',
     color=alt.value("#FFAA00")
-    )
+    ).properties(
+    width=600,
+    height=300)
 st.write(hist)
 
 ##############################################
 # Describe() of the CPI data in unit of Year #
 ##############################################
+st.markdown(""" 
+***
+#### Let's have a look of the CPI Yearly Change using `describe()` 
+""")
 cpiYear = cpi_month.groupby(cpi_month['Date'].dt.year).sum()
 cpiDescribe = cpiYear.describe().T
 st.write(cpiDescribe)
+
+st.write("and the monthly change")
+cpiMonthDescribe = cpi_month.describe().T
+st.write(cpiMonthDescribe)
 
 ##########################
 # Simple Summary for CPI #
 ##########################
 st.write("""
-The mean of change by the end of each month is 0.303173
+**In last 76 years, the CPI increase about 3.6% every year. Which is about 0.3% increase every month**
 
-Over all the money is lossing it's value through time. By 0.3% every month. 
-Which is about 3.638076 each Year. """)
+* Feel free to interact with the plot and see for example CPI after 2008 finicial crisis
+""")
 
 #################
 # Stock Section #
 #################
-st.write(""""
+st.write("""
 ***
 ### Now, let's have a look of the S&P500 and Nasdaq Composite 📈 or 📉
 """)
 
-st.markdown("""The Standard and Poor's 500, or simply the S&P 500,[5] is a stock market index tracking the stock performance of 500 large companies listed on stock exchanges in the United States.
+st.markdown("""The Standard and Poor's 500, or simply the S&P 500, is a stock market index tracking the stock performance of 500 large companies listed on stock exchanges in the United States.
 [link](https://en.wikipedia.org/wiki/S%26P_500)
 
-The Nasdaq Composite (ticker symbol ^IXIC)[1] is a stock market index that includes almost all stocks listed on the Nasdaq stock exchange. Along with the Dow Jones Industrial Average and S&P 500, it is one of the three most-followed stock market indices in the United States.
+The Nasdaq Composite (ticker symbol ^IXIC) is a stock market index that includes almost all stocks listed on the Nasdaq stock exchange. Along with the Dow Jones Industrial Average and S&P 500, it is one of the three most-followed stock market indices in the United States.
 [link](https://en.wikipedia.org/wiki/Nasdaq_Composite)
 """)
 #load sp500 data
@@ -126,14 +143,16 @@ nq_df = nq.history(period='max')
 #######################
 # Plot Raw SP500 Data #
 #######################
-st.write("SP500 Index")
+st.markdown("""#### SP500 Index""")
 st.line_chart(sp_df['Close'])
-
+st.write("You can see the circuit breaker in 2021, and current Bear market")
 
 ########################
 # Plot Raw Nasdaq Data #
 ########################
-st.write("Nasdaq Composite")
+st.markdown("""
+***
+#### Nasdaq Composite""")
 st.line_chart(nq_df['Close'])
 
 # sp500 daily closing #
@@ -152,7 +171,9 @@ sp_chart = alt.Chart(sp_day).mark_line().encode(
     x='Date',
     color=alt.value("#FFAA00"),
     tooltip=['SP_Percent','Date'],
-    ).interactive()
+    ).interactive().properties(
+    width=600,
+    height=300)
 st.write(sp_chart)
 
 ###############################
@@ -164,7 +185,10 @@ st.write("Desribe SP500 Yearly Change")
 st.write(spDescribe)
 
 ### nasdaq daily closing
-st.write("Nasdaq Composite Closing Percentage Chnage by day")
+st.markdown("""
+***
+Nasdaq Composite Closing Percentage Chnage by day
+""")
 N = nq_df['Close'].size
 change = ((nq_df['Close'][1:].values / nq_df['Close'][:N-1].values) - 1)*100
 changeData = Series(change, index=nq_df.index[1:])
@@ -178,7 +202,9 @@ nq_chart = alt.Chart(nq_day).mark_line().encode(
     x='Date',
     color=alt.value("#FFAA00"),
     tooltip=['NQ_Percent','Date'],
-    ).interactive()
+    ).interactive().properties(
+    width=600,
+    height=300)
 st.write(nq_chart)
 
 ################################
@@ -196,23 +222,28 @@ st.write(nqDescribe)
 #spM = sp_day.groupby(sp_day['Date'].dt.strftime('%Y-%m')).sum()
 #nqM = nq_day.groupby(nq_day['Date'].dt.strftime('%Y-%m')).sum()
 #cpiM = cpi_month['Index']
+st.markdown("""
+### Now, let put these data together 🥸
+(using `pd.concat()`)
+""")
 combine = pd.concat([spY, nqY,cpiYear], axis=1, join='inner')
 st.write(combine)
-st.write("Compare Yearly Change")
-st.line_chart(data=combine)
+combineD = combine.describe().T
+st.write(combineD)
+#st.write("Compare Yearly Change")
+#st.line_chart(data=combine)
 
 # Acculmate change rate
 sp_addup = sp_day['SP_Percent'].cumsum(axis=0)
 nq_addup = nq_day['NQ_Percent'].cumsum(axis=0)
-st.write("Acculmate change")
-st.write(sp_addup.describe().T)
-st.write(nq_addup.describe().T)
+
 
 #st.line_chart(sp_addup)
+st.write("SP&NQ")
 addup_combine = pd.concat([sp_addup,nq_addup],axis=1, join='inner')
 st.line_chart(addup_combine)
 add_up_describe = addup_combine.describe().T
-st.write(add_up_describe)
+#st.write(add_up_describe)
 
 # CPI change rate/year
 cpi_df = pd.DataFrame({'Date':cpi.index,'cpi':cpi.values}) 
@@ -259,14 +290,20 @@ dataframe = pd.concat([spYear_rate, nqYear_rate,cpiYear_rate], axis=1, join='out
 df = dataframe.fillna(0)[0:73]
 st.write("Change rate of SP, NQ, CPI over Years")
 st.line_chart(df)
+st.write(df.describe().T)
 
 st.markdown("""
 ### Summary: 
-* The Stock Market in long-term overcome the inflation. SP500 is more stable than NQ
-* Used altair, and streamlit chart for visulation
-* The data are from yfinance (Yahoo Finance) and fredapi
-* mainly used pandas to cleaning and analysis the data
+* The Stock Market in long-term overcomes the inflation. SP500 is more stable than NQ
+* When Inflation Increase, the stock market drop most time.
+##### Tools:
+* mainly used Pandas to cleaning and analyze the data
+* I used Altair, and streamlit chart for visulation
+##### Resources
+* The data are from yfinance (Yahoo Finance) and [FRED](https://fred.stlouisfed.org) api
 
+*** 
+#### Thank You for Listening 😊
 #### Yuhan Zhu 
 #### Date: Oct. 2022
 """)
